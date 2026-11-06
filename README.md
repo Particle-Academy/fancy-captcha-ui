@@ -44,7 +44,8 @@ export default function Register() {
 
 `form` is anything with `data` and `setData(key, value)`. The captcha's fields live in the form's
 data, so they post with everything else. If it also has `processing` (Inertia's and
-fancy-inertia's forms do), the captcha re-arms itself after every submit; see
+fancy-inertia's forms do, so pass the form itself rather than `{ data, setData }`), the captcha
+re-arms itself after every submit; see
 [Reset after a submit](#reset-after-a-submit).
 
 ### `action` must match the route
@@ -108,7 +109,13 @@ So the component re-arms itself after **every** submit, whatever the outcome: wh
 `form.processing` goes true and then false, it resets the widget (or re-executes reCAPTCHA v3, or
 solves a fresh proof-of-work) for whatever that submit posted. Something that was not posted is
 left alone: an unsolved widget, or a first proof-of-work still running. This is
-`resetAfterSubmit`, on by default:
+`resetAfterSubmit`, on by default.
+
+> **It needs `processing`.** Pass the form itself (`form={form}`). A hand-built object such as
+> `form={{ data, setData }}` has no `processing`, so the re-arm silently does nothing. If you do
+> build one, include it: `form={{ data, setData, processing }}`.
+
+To turn it off:
 
 ```tsx
 <Captcha config={fancyCaptcha} form={form} action="signup" resetAfterSubmit={false} />

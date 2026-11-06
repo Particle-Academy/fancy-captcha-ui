@@ -1,6 +1,6 @@
 {
   "name": "@particle-academy/fancy-captcha-ui",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "One provider-agnostic React captcha for fancy-captcha: built-in honeypot, signed timing and Web Worker proof-of-work, or Turnstile, reCAPTCHA and hCaptcha loaded lazily and SSR-safe, with optional consent gating. Built from react-fancy, AAA and RTL. Agents may read its status, never solve it.",
   "keywords": [
     "captcha",

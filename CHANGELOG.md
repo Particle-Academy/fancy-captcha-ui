@@ -10,6 +10,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-05
+
+### Fixed
+
+- **README: the re-arm after a submit needs `processing`.** A hand-built `form={{ data, setData }}`
+  has no `processing`, so `resetAfterSubmit` silently does nothing. The README now says to pass the
+  form itself, or to include `processing`. Documentation only; no code changed. Reported by
+  GuardCard. **Consumer action:** if you pass a hand-built form object, add `processing`.
+
 ## [0.2.0] - 2026-11-05
 
 ### Added
