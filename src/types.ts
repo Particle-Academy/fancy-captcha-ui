@@ -48,6 +48,13 @@ export interface CaptchaForm {
   data: object;
   // A method signature, so a stricter `setData<K extends keyof T>` is accepted.
   setData(key: string, value: string): void;
+  /**
+   * True while a submit is in flight (Inertia's and fancy-inertia's forms both
+   * have it). When present, the captcha re-arms once a submit finishes, because
+   * the server spends the token before the app validates. Optional: a form
+   * without it still works, it just cannot re-arm on its own.
+   */
+  processing?: boolean;
 }
 
 /**

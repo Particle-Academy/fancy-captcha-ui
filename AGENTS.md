@@ -27,6 +27,10 @@ contract is `CaptchaConfig` in `src/types.ts`, which mirrors `particle-academy/f
 - **A gated provider never loads or renders before `consent.allows(category)` is true**, and
   no `consent` means not granted.
 - **Clearing a token or solution the component wrote resets the widget or re-solves.**
+- **A finished submit re-arms what it posted, once** (`resetAfterSubmit`, on by default): edge-
+  triggered on `form.processing` true then false, only for a non-empty token or solution that is
+  still in the form. Never the signed timestamp, which the server does not make single-use.
+  `tests/resubmit.test.tsx`.
 - **The honeypot stays `aria-hidden` + `inert`, `tabIndex=-1`, `autoComplete="off"`, offset on
   the inline axis.**
 - **Agents read, never solve.** No export may produce a token or solution on a person's behalf

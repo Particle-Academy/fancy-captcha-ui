@@ -34,7 +34,7 @@ export default function Register() {
   return (
     <form onSubmit={(e) => { e.preventDefault(); form.post("/register", { onSuccess: () => form.reset() }); }}>
       {/* your fields */}
-      <Captcha config={fancyCaptcha} form={form} />
+      <Captcha config={fancyCaptcha} form={form} action="signup" />
       {form.errors.captcha && <p>{form.errors.captcha}</p>}
       <button type="submit" disabled={form.processing}>Create account</button>
     </form>
@@ -43,7 +43,32 @@ export default function Register() {
 ```
 
 `form` is anything with `data` and `setData(key, value)`. The captcha's fields live in the form's
-data, so they post with everything else.
+data, so they post with everything else. If it also has `processing` (Inertia's and
+fancy-inertia's forms do), the captcha re-arms itself after every submit; see
+[Reset after a submit](#reset-after-a-submit).
+
+### `action` must match the route
+
+The shared `fancyCaptcha` prop is the same for every page, so its `action` is `null` (or the
+global `fancy-captcha.action`). Give each form its action with the `action` prop, and make it
+**the same string as the route's middleware**:
+
+```php
+Route::post('/register', RegisterController::class)->middleware('captcha:signup');
+```
+
+```tsx
+<Captcha config={fancyCaptcha} form={form} action="signup" />
+```
+
+Pass `action` as a prop rather than spreading it into the config (`{...fancyCaptcha, action}`):
+the prop is the supported way, and it overrides the config's.
+
+A mismatch refuses **every** submit under Turnstile and reCAPTCHA v3, which report the action
+the token was solved for. The visitor sees only the generic message; the log line
+`fancy-captcha refused a submission.` carries `reason: action_mismatch` and the `action` the
+route expected. The built-in mode, hCaptcha and reCAPTCHA v2 do not check the action at all, so
+**a mismatch stays hidden until the driver changes**. Set it correctly from the start.
 
 ## With fancy-inertia's `useFancyForm`
 
@@ -74,10 +99,27 @@ Or give it the provider directly, with a callback:
 
 ## Reset after a submit
 
-**A provider token is single-use**, and so is a proof-of-work solution. When the form clears the
-field, which `form.reset()` does after a successful submit, the component resets the widget (or
-re-executes reCAPTCHA v3, or solves a fresh challenge). Without that, the second submit from the
-same page would be refused. A controlled `value` works the same way: set it to `""` to reset.
+**A provider token is single-use**, and so is a proof-of-work solution. And fancy-captcha's
+`captcha:<action>` middleware checks them **before your controller validates**, so a submit that
+comes back with a validation error ("that email is taken") has already spent what it posted. The
+signed `_captcha_started` timestamp is not single-use and is never touched.
+
+So the component re-arms itself after **every** submit, whatever the outcome: when
+`form.processing` goes true and then false, it resets the widget (or re-executes reCAPTCHA v3, or
+solves a fresh proof-of-work) for whatever that submit posted. Something that was not posted is
+left alone: an unsolved widget, or a first proof-of-work still running. This is
+`resetAfterSubmit`, on by default:
+
+```tsx
+<Captcha config={fancyCaptcha} form={form} action="signup" resetAfterSubmit={false} />
+```
+
+Turn it off only if you reset the captcha yourself (`useCaptcha().reset()`). With it off, or with a
+form that has no `processing`, a resubmit after a validation error posts a spent token and is
+refused.
+
+Clearing the field also resets, as before: `form.reset()` after a successful submit does it, and
+the two do not double up. A controlled `value` works the same way: set it to `""` to reset.
 
 Expiry is handled too: an expired or failed widget clears the token, and the status says so.
 

@@ -10,6 +10,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-05
+
+### Added
+
+- **`resetAfterSubmit` (default `true`): the captcha re-arms itself after every submit.**
+  fancy-captcha's `captcha:<action>` middleware verifies before the controller validates, so
+  a submit refused by your own validation ("email taken") has already spent its provider token
+  (sent to siteverify) or its proof-of-work (`ProofOfWork::redeem()` marks it spent first).
+  Until now only clearing the field re-armed the widget, which `form.reset()` does on success
+  and nothing does on an error, so resubmitting the same form was refused. Now, when
+  `form.processing` goes true and then false, the component resets the widget, re-executes
+  reCAPTCHA v3, or solves a fresh challenge for whatever that submit posted. An unsolved widget
+  or a first proof-of-work still running is left alone, a host `form.reset()` that already
+  cleared the field does not cause a second reset, and the signed timestamp (not single-use) is
+  never touched.
+  **Consumer action:** none with Inertia's `useForm()` or fancy-inertia's `useFancyForm()`; it
+  is on by default. If you worked around this by clearing `_captcha_token` / `_captcha_pow` in
+  `onError` or `onFinish`, you can remove that (it is harmless if kept). Pass
+  `resetAfterSubmit={false}` only if you reset the captcha yourself.
+- **`CaptchaForm.processing?: boolean`**, the in-flight flag the re-arm watches. Optional, so a
+  form adapter without it still type-checks and works as before.
+  **Consumer action:** none. A custom form adapter can add `processing` to get the re-arm.
+
+### Changed
+
+- **README: per-form `action`.** The Inertia example now passes `action="signup"`, and says it
+  must equal the route's `captcha:<action>`. The shared `fancyCaptcha` prop carries
+  `action: null`; a mismatch refuses every submit under Turnstile and reCAPTCHA v3 (logged as
+  `reason: action_mismatch`) and is not checked at all in built-in mode, hCaptcha or reCAPTCHA
+  v2, so it stays hidden until the driver changes. No code changed: `action` was already a
+  prop.
+  **Consumer action:** if you spread the action into the config (`{...fancyCaptcha, action}`),
+  switch to `<Captcha config={fancyCaptcha} form={form} action="signup" />`, and check every
+  form's `action` against its route's middleware before moving to a provider.
+
 ## [0.1.0] - 2026-11-05
 
 ### Added

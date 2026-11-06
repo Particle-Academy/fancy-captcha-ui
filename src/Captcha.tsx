@@ -44,7 +44,9 @@ const STATUS_CLASS = "mt-2 empty:hidden";
  * load the provider's script lazily, after mount (and, when gated, only after
  * consent), render its widget, and post its token in a hidden field. Clearing
  * the token from the form (as `form.reset()` does after a submit) resets the
- * widget, because a provider token can be used once.
+ * widget, because a provider token can be used once. With a form that has
+ * `processing`, it also re-arms after every submit (`resetAfterSubmit`),
+ * because the server spends the token before the app validates.
  *
  * Agents may READ the status from the `data-fancy-captcha-*` attributes. Nothing
  * here lets an agent solve or submit a captcha for a person, and nothing should.

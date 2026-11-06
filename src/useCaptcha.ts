@@ -38,6 +38,15 @@ export interface UseCaptchaOptions {
   theme?: "light" | "dark" | "auto";
   onStatusChange?: (status: CaptchaStatus) => void;
   messages?: CaptchaMessages;
+  /**
+   * With a `form` that has `processing`: once a submit finishes (`processing`
+   * goes true, then false), reset the widget, re-execute reCAPTCHA v3, or solve
+   * a fresh proof-of-work for whatever that submit posted. Whatever the outcome,
+   * because fancy-captcha's middleware spends the token before the app
+   * validates, so a validation error leaves a spent token in the form.
+   * Default `true`.
+   */
+  resetAfterSubmit?: boolean;
 }
 
 export interface CaptchaState {
@@ -293,6 +302,43 @@ export function useCaptcha(options: UseCaptchaOptions): CaptchaState {
     if (current.id !== null) current.api.reset(current.id);
     setStatus("ready");
   }
+
+  // Re-arm after a submit. fancy-captcha's middleware verifies before the
+  // controller validates, so by the time a validation error comes back the
+  // posted token has been sent to siteverify and the posted proof-of-work has
+  // been marked spent. Nothing clears the field on an error, so watch the
+  // submit itself: note what was posted when `processing` rises, and re-arm
+  // that when it falls. Edge-triggered, so it runs once per submit.
+  //  - Only what was posted: an empty field (an unsolved widget, a first
+  //    proof-of-work still running) was not spent and is left alone.
+  //  - Only if it is still in the form: a host whose `form.reset()` already
+  //    cleared it has triggered useConsumed's reset, and a field replaced by a
+  //    fresh value (a v3 refresh mid-submit) is not the spent one.
+  //  - Never the signed timestamp: the server does not make it single-use.
+  const processing = options.resetAfterSubmit === false ? undefined : form?.processing;
+  const posted = useRef<{ token: string; solution: string } | null>(null);
+  const rearm = useRef<() => void>(() => undefined);
+  rearm.current = () => {
+    const sent = posted.current;
+    posted.current = null;
+    if (!sent) return;
+    if (mode !== "builtin" && sent.token !== "" && token === sent.token) {
+      writeToken("");
+      resetWidget();
+    }
+    if (powEnabled && sent.solution !== "" && solution === sent.solution) {
+      markPow("");
+      write(fields.pow, "");
+      setPowRound((round) => round + 1);
+    }
+  };
+  useEffect(() => {
+    if (processing === true && posted.current === null) {
+      posted.current = { token, solution };
+    } else if (processing !== true && posted.current !== null) {
+      rearm.current();
+    }
+  });
 
   const onStatusChange = useRef(options.onStatusChange);
   onStatusChange.current = options.onStatusChange;
