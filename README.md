@@ -19,6 +19,13 @@ npm install @particle-academy/fancy-captcha-ui
 Every mode also renders the honeypot and the timestamp, because the server checks them in front
 of a provider too.
 
+<!-- fancy-agents-note:start -->
+> **For agents.** This package is listed on the Fancy MCP catalog server at
+> `https://ui.particle.academy/mcp` (streamable HTTP, no API key; MCP id `fancy-ui`),
+> with install commands and docs, alongside the rest of the kit. How an agent
+> installs and uses this package is in [AGENTS.md](https://github.com/Particle-Academy/fancy-captcha-ui/blob/main/AGENTS.md).
+<!-- fancy-agents-note:end -->
+
 ## With Inertia's `useForm`
 
 fancy-captcha shares its props with every page as `fancyCaptcha`.
@@ -202,13 +209,9 @@ Provider widgets follow their own language settings.
 
 ## Agents (Human+)
 
-An agent may read a captcha's state: the root carries `data-fancy-captcha`,
-`data-fancy-captcha-provider`, `data-fancy-captcha-mode` and `data-fancy-captcha-status`, and
-`onStatusChange` reports every change.
-
-**An agent must never solve or submit a captcha for a person.** Telling people and automation
-apart is the only thing a captcha is for, so there is no MCP bridge that writes, and any bridge
-written for it must be read-only.
+The root carries stable `data-fancy-captcha*` handles and `onStatusChange` reports every
+change, so an agent can read a captcha's state. It is read-only by design: there is no MCP bridge
+that writes. What an agent may and may not do is in [AGENTS.md](./AGENTS.md).
 
 ## Tailwind
 
